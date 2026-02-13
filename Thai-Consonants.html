@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Thai Consonant Drill</title>
+    <style>
+        :root {
+            --primary: #2563eb;
+            --danger: #dc2626;
+            --success: #16a34a;
+            --bg: #f8fafc;
+            --card: #ffffff;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            text-align: center;
+        }
+
+        .container {
+            background: var(--card);
+            padding: 2rem;
+            border-radius: 1rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            max-width: 500px;
+            width: 90%;
+        }
+
+        /* Typography */
+        h1 { font-size: 1.2rem; color: #64748b; margin-bottom: 0.5rem; }
+        h2 { font-size: 2rem; color: #1e293b; margin-top: 0; }
+        .thai-char { font-size: 6rem; font-weight: bold; margin: 1rem 0; color: var(--primary); }
+        
+        /* Game States */
+        .hidden { display: none !important; }
+        
+        /* Hearts */
+        .stats-bar { display: flex; justify-content: space-between; margin-bottom: 1rem; font-size: 1.5rem; }
+        .hearts { color: var(--danger); }
+
+        /* Buttons */
+        .btn {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            font-size: 1.1rem;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: transform 0.1s;
+            width: 100%;
+            margin: 5px 0;
+        }
+        
+        .btn:hover { opacity: 0.9; }
+        .btn:active { transform: scale(0.98); }
+
+        .options-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        /* Feedback Colors */
+        .btn.correct { background-color: var(--success) !important; }
+        .btn.wrong { background-color: var(--danger) !important; }
+
+        /* Animations */
+        @keyframes shake {
+            0% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+            100% { transform: translateX(0); }
+        }
+        .shake { animation: shake 0.3s ease-in-out; }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div id="home-screen">
+            <h1>CSII Team Engineering-Logic-group Presents</h1>
+            <h2>Thai Consonants</h2>
+            <p>Master all 44 consonants. You have 3 hearts.</p>
+            <button class="btn" onclick="startGame()">Start Quiz</button>
+        </div>
+
+        <div id="game-screen" class="hidden">
+            <div class="stats-bar">
+                <span id="progress">0/44</span>
+                <span class="hearts" id="hearts-display">❤️❤️❤️</span>
+            </div>
+            
+            <div id="question-area">
+                <div class="thai-char" id="current-char">ก</div>
+                <p>Select the correct definition:</p>
+                <div class="options-grid" id="options-container">
+                    </div>
+            </div>
+            
+            <div id="feedback-area" class="hidden">
+                <h3 id="feedback-title"></h3>
+                <p id="feedback-detail"></p>
+                <button class="btn" onclick="nextQuestion()">Next</button>
+            </div>
+        </div>
+
+        <div id="end-screen" class="hidden">
+            <h2 id="end-title">Game Over</h2>
+            <p id="end-score"></p>
+            <button class="btn" onclick="startGame()">Try Again</button>
+        </div>
+    </div>
+
+<script>
+    // --- DATA: The 44 Consonants ---
+    const consonants = [
+        { char: "ก", name: "Gor Kai", meaning: "Chicken" },
+        { char: "ข", name: "Khor Khai", meaning: "Egg" },
+        { char: "ฃ", name: "Khor Khuad", meaning: "Bottle" },
+        { char: "ค", name: "Khor Khwai", meaning: "Buffalo" },
+        { char: "ฅ", name: "Khor Khon", meaning: "Person" },
+        { char: "ฆ", name: "Khor Ra-khang", meaning: "Bell" },
+        { char: "ง", name: "Ngor Ngu", meaning: "Snake" },
+        { char: "จ", name: "Jor Jan", meaning: "Plate" },
+        { char: "ฉ", name: "Chor Ching", meaning: "Cymbals" },
+        { char: "ช", name: "Chor Chang", meaning: "Elephant" },
+        { char: "ซ", name: "Sor So", meaning: "Chain" },
+        { char: "ฌ", name: "Chor Cher", meaning: "Tree" },
+        { char: "ญ", name: "Yor Ying", meaning: "Woman" },
+        { char: "ฎ", name: "Dor Cha-da", meaning: "Headdress" },
+        { char: "ฏ", name: "Tor Pa-tak", meaning: "Goad/Spear" },
+        { char: "ฐ", name: "Thor Than", meaning: "Pedestal" },
+        { char: "ฑ", name: "Thor Montho", meaning: "Giantess" },
+        { char: "ฒ", name: "Thor Phu-thao", meaning: "Elder" },
+        { char: "ณ", name: "Nor Nen", meaning: "Novice Monk" },
+        { char: "ด", name: "Dor Dek", meaning: "Child" },
+        { char: "ต", name: "Tor Tao", meaning: "Turtle" },
+        { char: "ถ", name: "Thor Thung", meaning: "Sack" },
+        { char: "ท", name: "Thor Thahan", meaning: "Soldier" },
+        { char: "ธ", name: "Thor Thong", meaning: "Flag" },
+        { char: "น", name: "Nor Nu", meaning: "Mouse" },
+        { char: "บ", name: "Bor Baimai", meaning: "Leaf" },
+        { char: "ป", name: "Por Pla", meaning: "Fish" },
+        { char: "ผ", name: "Phor Phueng", meaning: "Bee" },
+        { char: "ฝ", name: "For Fa", meaning: "Lid" },
+        { char: "พ", name: "Phor Phan", meaning: "Tray" },
+        { char: "ฟ", name: "For Fan", meaning: "Teeth" },
+        { char: "ภ", name: "Phor Sam-phao", meaning: "Junk (Boat)" },
+        { char: "ม", name: "Mor Ma", meaning: "Horse" },
+        { char: "ย", name: "Yor Yak", meaning: "Giant" },
+        { char: "ร", name: "Ror Ruea", meaning: "Boat" },
+        { char: "ล", name: "Lor Ling", meaning: "Monkey" },
+        { char: "ว", name: "Wor Waen", meaning: "Ring" },
+        { char: "ศ", name: "Sor Sala", meaning: "Pavilion" },
+        { char: "ษ", name: "Sor Rue-si", meaning: "Hermit" },
+        { char: "ส", name: "Sor Suea", meaning: "Tiger" },
+        { char: "ห", name: "Hor Hip", meaning: "Chest/Box" },
+        { char: "ฬ", name: "Lor Chu-la", meaning: "Kite" },
+        { char: "อ", name: "Or Ang", meaning: "Basin" },
+        { char: "ฮ", name: "Hor Nok-huk", meaning: "Owl" }
+    ];
+
+    // --- STATE MANAGEMENT ---
+    let gameState = {
+        hearts: 3,
+        queue: [],
+        currentIndex: 0,
+        score: 0,
+        currentQuestion: null
+    };
+
+    // --- DOM ELEMENTS ---
+    const screens = {
+        home: document.getElementById('home-screen'),
+        game: document.getElementById('game-screen'),
+        end: document.getElementById('end-screen')
+    };
+
+    const ui = {
+        hearts: document.getElementById('hearts-display'),
+        progress: document.getElementById('progress'),
+        charDisplay: document.getElementById('current-char'),
+        options: document.getElementById('options-container'),
+        questionArea: document.getElementById('question-area'),
+        feedbackArea: document.getElementById('feedback-area'),
+        feedbackTitle: document.getElementById('feedback-title'),
+        feedbackDetail: document.getElementById('feedback-detail'),
+        endTitle: document.getElementById('end-title'),
+        endScore: document.getElementById('end-score')
+    };
+
+    // --- LOGIC ---
+
+    function startGame() {
+        // Reset State
+        gameState.hearts = 3;
+        gameState.score = 0;
+        gameState.currentIndex = 0;
+        // Create a shuffled copy of the consonants
+        gameState.queue = [...consonants].sort(() => Math.random() - 0.5);
+        
+        showScreen('game');
+        loadQuestion();
+    }
+
+    function loadQuestion() {
+        // Check win condition
+        if (gameState.currentIndex >= gameState.queue.length) {
+            endGame(true);
+            return;
+        }
+
+        const target = gameState.queue[gameState.currentIndex];
+        gameState.currentQuestion = target;
+
+        // Update UI stats
+        updateStats();
+
+        // Reset View
+        ui.questionArea.classList.remove('hidden');
+        ui.feedbackArea.classList.add('hidden');
+        ui.charDisplay.textContent = target.char;
+        ui.options.innerHTML = '';
+
+        // Generate Options (1 correct + 3 wrong)
+        let options = [target];
+        while (options.length < 4) {
+            const random = consonants[Math.floor(Math.random() * consonants.length)];
+            if (!options.includes(random)) {
+                options.push(random);
+            }
+        }
+        // Shuffle options
+        options.sort(() => Math.random() - 0.5);
+
+        // Render Buttons
+        options.forEach(opt => {
+            const btn = document.createElement('button');
+            btn.className = 'btn';
+            btn.textContent = `${opt.name} (${opt.meaning})`;
+            btn.onclick = () => handleAnswer(opt, btn);
+            ui.options.appendChild(btn);
+        });
+    }
+
+    function handleAnswer(selected, btnElement) {
+        const correct = gameState.currentQuestion;
+        const isCorrect = selected.char === correct.char;
+
+        // Disable all buttons
+        const allBtns = ui.options.querySelectorAll('.btn');
+        allBtns.forEach(b => b.disabled = true);
+
+        if (isCorrect) {
+            btnElement.classList.add('correct');
+            gameState.score++;
+            ui.feedbackTitle.textContent = "Correct!";
+            ui.feedbackTitle.style.color = "var(--success)";
+        } else {
+            btnElement.classList.add('wrong');
+            gameState.hearts--;
+            ui.feedbackTitle.textContent = "Incorrect";
+            ui.feedbackTitle.style.color = "var(--danger)";
+            
+            // Add shake animation
+            const container = document.querySelector('.container');
+            container.classList.add('shake');
+            setTimeout(() => container.classList.remove('shake'), 300);
+            
+            // Highlight the correct one
+            allBtns.forEach(b => {
+                if (b.textContent.includes(correct.name)) b.classList.add('correct');
+            });
+            
+            updateStats();
+        }
+
+        ui.feedbackDetail.textContent = `${correct.char} is ${correct.name} (${correct.meaning}). You have ${gameState.hearts} heart(s) left.`;
+
+        // Check loss condition immediately
+        if (gameState.hearts <= 0) {
+            setTimeout(() => endGame(false), 1500);
+        } else {
+            // Show feedback button
+            ui.questionArea.classList.add('hidden');
+            ui.feedbackArea.classList.remove('hidden');
+        }
+    }
+
+    function nextQuestion() {
+        gameState.currentIndex++;
+        loadQuestion();
+    }
+
+    function endGame(isWin) {
+        showScreen('end');
+        if (isWin) {
+            ui.endTitle.textContent = "Congratulations!";
+            ui.endScore.textContent = `You mastered all 44 consonants!`;
+        } else {
+            ui.endTitle.textContent = "Game Over";
+            ui.endScore.textContent = `You reached ${gameState.currentIndex} out of 44.`;
+        }
+    }
+
+    function updateStats() {
+        let heartString = "";
+        for (let i = 0; i < gameState.hearts; i++) heartString += "❤️";
+        ui.hearts.textContent = heartString;
+        ui.progress.textContent = `${gameState.currentIndex + 1} / 44`;
+    }
+
+    function showScreen(screenName) {
+        Object.values(screens).forEach(s => s.classList.add('hidden'));
+        screens[screenName].classList.remove('hidden');
+    }
+</script>
+</body>
+</html>
