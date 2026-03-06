@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Documentation - Thai Consonant Drill</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&family=Outfit:wght@500;700&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            --primary: #2563eb;
+            --accent: #3b82f6;
+            --bg: #0f172a;
+            --card: #1e293b;
+            --text: #f8fafc;
+            --text-muted: #94a3b8;
+            --border: #334155;
+            --success: #22c55e;
+            --warning: #f59e0b;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+            margin: 0;
+            padding: 0;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 4rem 2rem;
+        }
+
+        header {
+            margin-bottom: 3rem;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 2rem;
+        }
+
+        h1,
+        h2,
+        h3 {
+            font-family: 'Outfit', sans-serif;
+            font-weight: 700;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            margin-top: 0;
+            background: linear-gradient(to right, #60a5fa, #a855f7);
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        h2 {
+            font-size: 1.75rem;
+            margin-top: 2.5rem;
+            color: var(--accent);
+        }
+
+        .section {
+            background: var(--card);
+            border-radius: 1rem;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            border: 1px solid var(--border);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        }
+
+        code {
+            background: #000;
+            padding: 0.2rem 0.4rem;
+            border-radius: 0.25rem;
+            font-family: 'Fira Code', monospace;
+            font-size: 0.9em;
+            color: #fb7185;
+        }
+
+        pre {
+            background: #000;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            overflow-x: auto;
+            border: 1px solid var(--border);
+        }
+
+        pre code {
+            background: transparent;
+            padding: 0;
+            color: #38bdf8;
+        }
+
+        .alert {
+            padding: 1rem;
+            border-radius: 0.5rem;
+            margin: 1rem 0;
+            border-left: 4px solid;
+        }
+
+        .alert-tip {
+            background: rgba(34, 197, 94, 0.1);
+            border-color: var(--success);
+            color: #86efac;
+        }
+
+        .alert-important {
+            background: rgba(245, 158, 11, 0.1);
+            border-color: var(--warning);
+            color: #fcd34d;
+        }
+
+        ul {
+            padding-left: 1.5rem;
+        }
+
+        li {
+            margin-bottom: 0.5rem;
+        }
+
+        .back-link {
+            display: inline-block;
+            margin-top: 2rem;
+            color: var(--accent);
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .back-link:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <header>
+            <h1>Developer Documentation</h1>
+            <p style="color: var(--text-muted)">Thai Consonant Drill Application Guide</p>
+        </header>
+
+        <div class="section">
+            <h2>System Overview</h2>
+            <p>The Thai Consonant Drill is a full-stack web application designed to help users master Thai consonants
+                through an interactive quiz. It features persistent play count tracking using a PostgreSQL database.</p>
+        </div>
+
+        <div class="section">
+            <h2>Backend API</h2>
+            <h3><code>POST /start-quiz</code></h3>
+            <p>Initializes or updates a player's session and increments their total play count.</p>
+            <p><strong>Request Body:</strong></p>
+            <pre><code>{
+  "nickname": "String"
+}</code></pre>
+            <p><strong>Response:</strong></p>
+            <pre><code>{
+  "streak_count": Number
+}</code></pre>
+            <p><em>*Note: Though named <code>streak_count</code> in the database for legacy reasons, it now represents
+                    total plays.</em></p>
+
+            <h3><code>GET /health</code></h3>
+            <p>Returns the status of the server.</p>
+        </div>
+
+        <div class="section">
+            <h2>Deployment on Render</h2>
+            <ol>
+                <li><strong>Database:</strong> Create a New PostgreSQL instance. Use the
+                    <code>Internal Database URL</code> for the web service.
+                </li>
+                <li><strong>Web Service:</strong> Create a New Web Service connected to your GitHub repo.
+                    <ul>
+                        <li><strong>Root Directory:</strong> <code>backend</code></li>
+                        <li><strong>Build Command:</strong> <code>npm install</code></li>
+                        <li><strong>Start Command:</strong> <code>node server.js</code></li>
+                    </ul>
+                </li>
+                <li><strong>Environment Variables:</strong> Add <code>DATABASE_URL</code> with your PostgreSQL
+                    connection string.</li>
+            </ol>
+            <div class="alert alert-tip">
+                <strong>Tip:</strong> Ensure your Render service has access to the database via its internal network for
+                faster performance.
+            </div>
+        </div>
+
+        <a href="/" class="back-link">← Back to Game</a>
+    </div>
+</body>
+
+</html>

@@ -14,6 +14,11 @@ app.use(express.json());
 // Serve static files from the root directory
 app.use(express.static(path.join(__dirname, '..')));
 
+// Route to serve docs.html
+app.get('/docs', (req, res) => {
+    res.sendFile(path.join(__dirname, '..', 'docs.html'));
+});
+
 // Route to serve index.html
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, '..', 'index.html'));
