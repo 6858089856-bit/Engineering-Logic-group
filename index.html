@@ -270,8 +270,11 @@
             }
             gameState.nickname = nickname;
 
+            // The backend serves this file, so we can use a relative path
+            const API_BASE_URL = ''; // Empty string means same origin
+
             try {
-                const response = await fetch('http://localhost:5001/start-quiz', {
+                const response = await fetch(`${API_BASE_URL}/start-quiz`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ nickname: nickname })
