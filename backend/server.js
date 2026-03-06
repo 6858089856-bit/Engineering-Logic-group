@@ -27,22 +27,20 @@ const pool = new Pool({
     }
 });
 
-// Helper to check if two dates are consecutive days
+// Helper to check if two dates are consecutive days (UTC)
 function isConsecutiveDay(lastDate, currentDate) {
     const d1 = new Date(lastDate);
     const d2 = new Date(currentDate);
 
-    // Set time to midnight for comparison
-    d1.setHours(0, 0, 0, 0);
-    d2.setHours(0, 0, 0, 0);
+    // Normalize both to UTC midnight
+    const utc1 = Date.UTC(d1.getUTCFullYear(), d1.getUTCMonth(), d1.getUTCDate());
+    const utc2 = Date.UTC(d2.getUTCFullYear(), d2.getUTCMonth(), d2.getUTCDate());
 
-    const diffTime = Math.abs(d2 - d1);
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-
+    const diffDays = Math.floor((utc2 - utc1) / (1000 * 60 * 60 * 24));
     return diffDays === 1;
 }
 
-// Helper to check if it's the same day
+// Helper to check if it's the same day (UTC)
 function isSameDay(lastDate, currentDate) {
     const d1 = new Date(lastDate);
     const d2 = new Date(currentDate);
@@ -56,47 +54,64 @@ app.post('/start-quiz', async (req, res) => {
     const { nickname } = req.body;
 
     if (!nickname) {
+        console.log("Error: Nickname is missing in request body");
         return res.status(400).json({ error: 'Nickname is required' });
     }
+
+    const normalizedNickname = nickname.trim().toLowerCase();
+    console.log(`\n--- Streak Request for: "${normalizedNickname}" ---`);
 
     try {
         const now = new Date();
 
         // Check if user exists
-        const userResult = await pool.query('SELECT * FROM users WHERE nickname = $1', [nickname]);
+        console.log(`Checking database for user: ${normalizedNickname}`);
+        const userResult = await pool.query('SELECT * FROM users WHERE LOWER(nickname) = $1', [normalizedNickname]);
 
         if (userResult.rows.length === 0) {
             // New user
+            console.log(`User not found. Creating new user: ${normalizedNickname}`);
             const insertResult = await pool.query(
                 'INSERT INTO users (nickname, streak_count, last_played) VALUES ($1, $2, $3) RETURNING streak_count',
-                [nickname, 1, now]
+                [normalizedNickname, 1, now]
             );
-            return res.json({ streak_count: insertResult.rows[0].streak_count });
+            console.log(`Successfully created user. Initial streak: 1`);
+            return res.json({ streak_count: 1 });
         }
 
         const user = userResult.rows[0];
         let newStreak = user.streak_count;
+        const lastPlayed = new Date(user.last_played);
 
-        if (isSameDay(user.last_played, now)) {
-            // Already played today, streak remains same
-        } else if (isConsecutiveDay(user.last_played, now)) {
-            // Played yesterday, increment streak
+        console.log(`User found. Last played: ${lastPlayed.toISOString()}, Current streak: ${newStreak}`);
+
+        if (isSameDay(lastPlayed, now)) {
+            console.log("User already played today. Streak remains same.");
+        } else if (isConsecutiveDay(lastPlayed, now)) {
             newStreak += 1;
+            console.log(`Consecutive day! Streak incremented to: ${newStreak}`);
         } else {
-            // Missed a day or more, reset streak
             newStreak = 1;
+            console.log(`Day(s) missed. Streak reset to 1.`);
         }
 
         // Update user record
-        await pool.query(
-            'UPDATE users SET streak_count = $1, last_played = $2 WHERE nickname = $3',
-            [newStreak, now, nickname]
+        console.log(`Updating database for ${normalizedNickname}: streak_count=${newStreak}, last_played=${now.toISOString()}`);
+        const updateResult = await pool.query(
+            'UPDATE users SET streak_count = $1, last_played = $2 WHERE LOWER(nickname) = $3 RETURNING streak_count',
+            [newStreak, now, normalizedNickname]
         );
 
+        if (updateResult.rowCount === 0) {
+            console.error(`Failed to update streak for ${normalizedNickname}`);
+            throw new Error("Update failed - user not found or database error");
+        }
+
+        console.log(`Successfully updated. Returning streak: ${newStreak}`);
         res.json({ streak_count: newStreak });
     } catch (err) {
-        console.error('Error processing streak:', err);
-        res.status(500).json({ error: 'Internal server error' });
+        console.error('DATABASE ERROR in /start-quiz:', err.message);
+        res.status(500).json({ error: 'Database error', detail: err.message });
     }
 });
 

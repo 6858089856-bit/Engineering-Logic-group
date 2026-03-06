@@ -274,18 +274,26 @@
             const API_BASE_URL = ''; // Empty string means same origin
 
             try {
+                ui.displayStreak.textContent = "Loading...";
                 const response = await fetch(`${API_BASE_URL}/start-quiz`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ nickname: nickname })
                 });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.detail || errorData.error || "Failed to fetch streak");
+                }
+
                 const data = await response.json();
-                if (data.streak_count) {
+                if (data.streak_count !== undefined) {
                     gameState.streak = data.streak_count;
                 }
             } catch (error) {
-                console.error("Error connecting to backend:", error);
-                // Proceed even if backend fails, just without streak
+                console.error("Backend Streak Error:", error);
+                ui.displayStreak.textContent = "Offline";
+                // We don't block the game, just warn the user
             }
 
             startGame();
