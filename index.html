@@ -149,7 +149,7 @@
 
         <div id="game-screen" class="hidden">
             <div id="user-info" style="margin-bottom: 10px; font-weight: bold; color: var(--primary);">
-                <span id="display-nickname"></span> (Streak: <span id="display-streak">0</span>)
+                <span id="display-nickname"></span> (Total Plays: <span id="display-streak">0</span>)
             </div>
             <div class="stats-bar">
                 <span id="progress">0/44</span>
@@ -291,7 +291,7 @@
                     gameState.streak = data.streak_count;
                 }
             } catch (error) {
-                console.error("Backend Streak Error:", error);
+                console.error("Backend Play Count Error:", error);
                 ui.displayStreak.textContent = "Offline";
                 // We don't block the game, just warn the user
             }

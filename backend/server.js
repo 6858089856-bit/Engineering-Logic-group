@@ -27,29 +27,7 @@ const pool = new Pool({
     }
 });
 
-// Helper to check if two dates are consecutive days (UTC)
-function isConsecutiveDay(lastDate, currentDate) {
-    const d1 = new Date(lastDate);
-    const d2 = new Date(currentDate);
-
-    // Normalize both to UTC midnight
-    const utc1 = Date.UTC(d1.getUTCFullYear(), d1.getUTCMonth(), d1.getUTCDate());
-    const utc2 = Date.UTC(d2.getUTCFullYear(), d2.getUTCMonth(), d2.getUTCDate());
-
-    const diffDays = Math.floor((utc2 - utc1) / (1000 * 60 * 60 * 24));
-    return diffDays === 1;
-}
-
-// Helper to check if it's the same day (UTC)
-function isSameDay(lastDate, currentDate) {
-    const d1 = new Date(lastDate);
-    const d2 = new Date(currentDate);
-    return d1.getUTCFullYear() === d2.getUTCFullYear() &&
-        d1.getUTCMonth() === d2.getUTCMonth() &&
-        d1.getUTCDate() === d2.getUTCDate();
-}
-
-// Route to handle quiz start/streak tracking
+// Route to handle quiz start/play count tracking
 app.post('/start-quiz', async (req, res) => {
     const { nickname } = req.body;
 
@@ -59,7 +37,7 @@ app.post('/start-quiz', async (req, res) => {
     }
 
     const normalizedNickname = nickname.trim().toLowerCase();
-    console.log(`\n--- Streak Request for: "${normalizedNickname}" ---`);
+    console.log(`\n--- Play Count Request for: "${normalizedNickname}" ---`);
 
     try {
         const now = new Date();
@@ -75,40 +53,29 @@ app.post('/start-quiz', async (req, res) => {
                 'INSERT INTO users (nickname, streak_count, last_played) VALUES ($1, $2, $3) RETURNING streak_count',
                 [normalizedNickname, 1, now]
             );
-            console.log(`Successfully created user. Initial streak: 1`);
+            console.log(`Successfully created user. Initial play count: 1`);
             return res.json({ streak_count: 1 });
         }
 
         const user = userResult.rows[0];
-        let newStreak = user.streak_count;
-        const lastPlayed = new Date(user.last_played);
+        const newPlayCount = user.streak_count + 1;
 
-        console.log(`User found. Last played: ${lastPlayed.toISOString()}, Current streak: ${newStreak}`);
-
-        if (isSameDay(lastPlayed, now)) {
-            console.log("User already played today. Streak remains same.");
-        } else if (isConsecutiveDay(lastPlayed, now)) {
-            newStreak += 1;
-            console.log(`Consecutive day! Streak incremented to: ${newStreak}`);
-        } else {
-            newStreak = 1;
-            console.log(`Day(s) missed. Streak reset to 1.`);
-        }
+        console.log(`User found. Current total plays: ${user.streak_count}. Incrementing to: ${newPlayCount}`);
 
         // Update user record
-        console.log(`Updating database for ${normalizedNickname}: streak_count=${newStreak}, last_played=${now.toISOString()}`);
+        console.log(`Updating database for ${normalizedNickname}: streak_count=${newPlayCount}, last_played=${now.toISOString()}`);
         const updateResult = await pool.query(
             'UPDATE users SET streak_count = $1, last_played = $2 WHERE LOWER(nickname) = $3 RETURNING streak_count',
-            [newStreak, now, normalizedNickname]
+            [newPlayCount, now, normalizedNickname]
         );
 
         if (updateResult.rowCount === 0) {
-            console.error(`Failed to update streak for ${normalizedNickname}`);
+            console.error(`Failed to update play count for ${normalizedNickname}`);
             throw new Error("Update failed - user not found or database error");
         }
 
-        console.log(`Successfully updated. Returning streak: ${newStreak}`);
-        res.json({ streak_count: newStreak });
+        console.log(`Successfully updated. Returning total plays: ${newPlayCount}`);
+        res.json({ streak_count: newPlayCount });
     } catch (err) {
         console.error('DATABASE ERROR in /start-quiz:', err.message);
         res.status(500).json({ error: 'Database error', detail: err.message });
