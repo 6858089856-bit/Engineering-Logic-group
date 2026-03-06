@@ -19,6 +19,17 @@ app.get('/docs', (req, res) => {
     res.sendFile(path.join(__dirname, '..', 'docs.html'));
 });
 
+// Route to fetch leaderboard data
+app.get('/leaderboard', async (req, res) => {
+    try {
+        const result = await pool.query('SELECT nickname, streak_count FROM users ORDER BY streak_count DESC LIMIT 50');
+        res.json(result.rows);
+    } catch (err) {
+        console.error('DATABASE ERROR in /leaderboard:', err.message);
+        res.status(500).json({ error: 'Database error' });
+    }
+});
+
 // Route to serve index.html
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, '..', 'index.html'));
