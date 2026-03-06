@@ -192,6 +192,31 @@
             </div>
         </div>
 
+        <div class="section">
+            <h2>Accessing Your Database</h2>
+            <p>You can access your PostgreSQL data in two main ways:</p>
+
+            <h3>1. Render Dashboard (Visual)</h3>
+            <ul>
+                <li>Log in to <a href="https://dashboard.render.com" target="_blank"
+                        style="color: var(--accent)">Render</a>.</li>
+                <li>Select your <strong>PostgreSQL</strong> instance.</li>
+                <li>Go to the <strong>Connect</strong> tab to see connection details.</li>
+                <li>Use the <strong>Shell</strong> tab to run SQL queries directly in the browser.</li>
+            </ul>
+
+            <h3>2. External Management Tools</h3>
+            <p>To use tools like <strong>DBeaver</strong>, <strong>TablePlus</strong>, or <code>psql</code>:</p>
+            <ul>
+                <li>Copy the <strong>External Database URL</strong> from Render.</li>
+                <li>Paste it into your tool's "Connect with URL" or "Import URI" section.</li>
+            </ul>
+            <div class="alert alert-important">
+                <strong>Important:</strong> Render databases may require you to add your IP address to the
+                <strong>Access Control</strong> settings before you can connect externally.
+            </div>
+        </div>
+
         <a href="/" class="back-link">← Back to Game</a>
     </div>
 </body>
